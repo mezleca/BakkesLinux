@@ -27,7 +27,7 @@ from config import set_launch_options
 RUNNER_PATH = f"{BIN_DIR}/bakkesmod"
 CONFIG_FILE = f"{CONFIG_DIR}/repo_path"
 DOWNLOAD_URL = "https://github.com/bakkesmodorg/BakkesModInjectorCpp/releases/latest/download/BakkesModSetup.zip"
-REQUIRED_COMMANDS = ["mkdir", "rm", "curl", "killall", "sleep", "yad"]
+REQUIRED_COMMANDS = ["mkdir", "rm", "curl", "killall", "sleep"]
 
 
 def save_repo_path() -> bool:
