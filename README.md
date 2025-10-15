@@ -1,4 +1,4 @@
-# BakkesLinux - Automated BakkesMod for Linux
+# BakkesLinux
 
 fork of [BakkesLinux](https://github.com/CrumblyLiquid/BakkesLinux) that uses Python to automate BakkesMod installation and execution on Linux. includes some modifications to make the whole process easier.
 
