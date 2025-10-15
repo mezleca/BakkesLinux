@@ -8,11 +8,10 @@ fork of [BakkesLinux](https://github.com/CrumblyLiquid/BakkesLinux) that uses Py
 # clone and install for Steam (default)
 git clone https://github.com/mezleca/BakkesLinux
 cd BakkesLinux
-./run.sh install --platform="steam"
 
-# for other platforms
+# install 
 # supported platforms: steam, heroic
-./run.sh install --platform="heroic"
+./run.sh install --platform="steam"
 ```
 
 ## Usage
@@ -23,6 +22,9 @@ bakkesmod run
 
 # run standalone (without RL checks)
 bakkesmod run --standalone
+
+# run for a specific platform (need to install first)
+bakkesmod run --platform="heroic"
 
 # update or remove
 bakkesmod update
