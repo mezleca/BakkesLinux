@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 
+import json
 import os
 import sys
 import time
 import requests
 import zipfile
+import argparse
 from pathlib import Path
-from typing import Optional
 from utils import (
-    get_proton_path,
+    CONFIG_DIR,
+    DESKTOP_DIR,
+    get_rl_prefix,
+    REPO_DIR,
+    BIN_DIR,
     log_info,
     log_error,
     log_success,
@@ -16,19 +21,13 @@ from utils import (
     run_command,
     is_process_running,
     ensure_dir,
-    get_home_dir,
 )
 from config import set_launch_options
 
-HOME = get_home_dir()
-REPO_DIR = str(Path(__file__).parent.parent.absolute())
-CONFIG_DIR = f"{HOME}/.local/share/BakkesLinux"
-BIN_DIR = f"{HOME}/.local/bin"
-DESKTOP_DIR = f"{HOME}/.local/share/applications"
 RUNNER_PATH = f"{BIN_DIR}/bakkesmod"
 CONFIG_FILE = f"{CONFIG_DIR}/repo_path"
 DOWNLOAD_URL = "https://github.com/bakkesmodorg/BakkesModInjectorCpp/releases/latest/download/BakkesModSetup.zip"
-REQUIRED_COMMANDS = ["mkdir", "rm", "curl", "killall", "sleep"]
+REQUIRED_COMMANDS = ["mkdir", "rm", "curl", "killall", "sleep", "yad"]
 
 
 def save_repo_path() -> bool:
@@ -36,7 +35,7 @@ def save_repo_path() -> bool:
 
     try:
         with open(CONFIG_FILE, "w") as f:
-            f.write(REPO_DIR)
+            _ = f.write(REPO_DIR)
         log_success(f"Saved repository path: {REPO_DIR}")
         return True
     except Exception as e:
@@ -44,28 +43,30 @@ def save_repo_path() -> bool:
         return False
 
 
-def download_bakkesmod_setup() -> Optional[str]:
+def download_bakkesmod_setup() -> str | None:
     zip_path = f"{REPO_DIR}/BakkesModSetup.zip"
     extract_dir = f"{REPO_DIR}/BakkesModSetup"
 
     log_info(f"Downloading BakkesModSetup.zip from {DOWNLOAD_URL}")
 
+    # write temp zip file
     try:
         response = requests.get(DOWNLOAD_URL, stream=True)
         response.raise_for_status()
 
         with open(zip_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-
-        log_success("Download complete")
+                _ = f.write(chunk)
 
         ensure_dir(extract_dir)
 
         log_info("Extracting BakkesModSetup.zip")
+
+        # extract the installer
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(extract_dir)
 
+        # remove temp zip
         os.remove(zip_path)
         log_success("BakkesModSetup extracted successfully")
 
@@ -84,31 +85,40 @@ def wait_process_exit(process_name: str, message: str) -> None:
         time.sleep(1)
 
 
-def setup_prefix_and_install(setup_exe_path: str) -> bool:
+def setup_prefix_and_install(setup_exe_path: str, platform: str) -> bool:
     wait_process_exit("RocketLeague.exe", "Waiting for RocketLeague to exit")
 
-    proton_path = get_proton_path("")
-    if not proton_path:
+    # attempt to get data from the platform
+    data = get_rl_prefix(platform)
+    if not data:
+        log_error(f"Failed to get Rocket League data from {platform}")
         return False
 
-    rl_prefix = f"{HOME}/.steam/steam/steamapps/compatdata/252950"
-    wine_prefix = f"{rl_prefix}/pfx"
-    wine_bin = f"{proton_path}/bin/wine64"
+    # deconstruct data
+    wine_prefix, wine_bin = data
 
     log_info("Configuring prefix to Windows 10")
 
+    # set prefix to windows 10 (og BakkesLinux does that so why not)
     wine_cmd = f'WINEFSYNC=1 WINEPREFIX="{wine_prefix}" "{wine_bin}" winecfg /v win10'
     _ = run_command(wine_cmd, True, True)
 
     log_info("Running BakkesMod setup executable")
 
+    # add exec permission to executable
     setup_exe = Path(setup_exe_path, "BakkesModSetup.exe")
     os.chmod(setup_exe, 0o755)
 
+    # run the bakkesmod setup with the platform prefix/bin
     install_cmd = f'WINEFSYNC=1 WINEPREFIX="{wine_prefix}" "{wine_bin}" "{setup_exe}"'
     if not run_command(install_cmd):
         log_error("Failed to run BakkesMod setup")
         return False
+
+    # now save the prefix data to config folder
+    platform_config_path = f"{CONFIG_DIR}/{platform}"
+    with open(platform_config_path, "w") as f:
+        _ = f.write(f"WINE_PREFIX={wine_prefix}\nWINE_BINARY={wine_bin}")
 
     return True
 
@@ -118,6 +128,7 @@ def create_bakkesmod_symlink() -> bool:
 
     runner_script = f"{REPO_DIR}/src/runner.sh"
 
+    # shouldn't happen
     if not Path(runner_script).exists():
         log_error(f"runner.sh not found: {runner_script}")
         return False
@@ -140,13 +151,16 @@ def create_bakkesmod_symlink() -> bool:
         return False
 
 
-def create_desktop_file() -> bool:
-    log_info(f"Creating desktop file at {DESKTOP_DIR}/bakkesmod.desktop")
+def create_desktop_file(platform: str) -> bool:
+    desktop_filename = f"bakkesmod-{platform}.desktop"
+    desktop_path = f"{DESKTOP_DIR}/{desktop_filename}"
+    
+    log_info(f"Creating desktop file for {platform} at {desktop_path}")
 
     desktop_content = f"""[Desktop Entry]
-Name=BakkesMod
-Comment=Bakkesmod for Rocket League (STEAM)
-Exec={RUNNER_PATH} run --standalone
+Name=BakkesMod ({platform.title()})
+Comment=Bakkesmod for Rocket League ({platform.title()})
+Exec={RUNNER_PATH} run --standalone --platform="{platform}"
 Icon=applications-games
 Terminal=false
 Type=Application
@@ -154,12 +168,11 @@ Categories=Game;
 """
 
     try:
-        desktop_path = f"{DESKTOP_DIR}/bakkesmod.desktop"
         with open(desktop_path, "w") as f:
-            f.write(desktop_content)
+            _ = f.write(desktop_content)
 
         os.chmod(desktop_path, 0o644)
-        log_success("Desktop file created successfully")
+        log_success(f"Desktop file created successfully: {desktop_filename}")
         return True
     except Exception as e:
         log_error(f"Failed to create desktop file: {e}")
@@ -188,6 +201,7 @@ def setup_launch_options() -> None:
 def install() -> int:
     os.environ["WINEDEBUG"] = "-all"
 
+    # ensure we have the required commands
     if not check_required_commands(REQUIRED_COMMANDS):
         return 1
 
@@ -196,6 +210,7 @@ def install() -> int:
     ensure_dir(BIN_DIR)
     ensure_dir(DESKTOP_DIR)
 
+    # save repo path
     if not save_repo_path():
         return 1
 
@@ -203,16 +218,29 @@ def install() -> int:
     if not setup_dir:
         return 1
 
-    if not setup_prefix_and_install(setup_dir):
+    parser = argparse.ArgumentParser(description="BakkesMod Installer")
+    _ = parser.add_argument("--platform", choices=["steam", "heroic"])
+
+    args = parser.parse_args()
+    platform: str = args.platform or "steam"
+
+    # create prefix for the desired platform
+    if not setup_prefix_and_install(setup_dir, platform):
         return 1
 
+    # create symlink
     if not create_bakkesmod_symlink():
         return 1
 
-    if not create_desktop_file():
+    # create desktop file
+    if not create_desktop_file(platform):
         return 1
 
-    setup_launch_options()
+    # setup launch options for steam
+    if platform == "steam":
+        setup_launch_options()
+    else:
+        log_info("skipping launch options setup")
 
     log_success("Installation complete!")
     log_info("You can now run 'bakkesmod' from anywhere")

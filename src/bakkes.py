@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import os
+from random import choices
 import sys
 import time
 import argparse
 from pathlib import Path
 from utils import (
+    get_config_data,
     get_proton_path,
     log_info,
     log_error,
@@ -17,14 +19,12 @@ from utils import (
 )
 
 HOME = str(Path.home())
-RL_PREFIX = f"{HOME}/.steam/steam/steamapps/compatdata/252950"
-BAKKES_EXE = f"{RL_PREFIX}/pfx/drive_c/Program Files/BakkesMod/BakkesMod.exe"
 WINESYNC = "WINEFSYNC=1"
 
 
-def check_bakkes_exists() -> bool:
-    if not Path(BAKKES_EXE).exists():
-        log_error(f"{BAKKES_EXE} doesn't exist! ABORTING!")
+def check_bakkes_exists(executable: str) -> bool:
+    if not Path(executable).exists():
+        log_error(f"{executable} doesn't exist! ABORTING!")
         return False
     return True
 
@@ -40,15 +40,14 @@ def wait_for_rocket_league() -> str | bool | None:
     return game_pid
 
 
-def launch_bakkesmod(proton_path: str, SYNC: str):
+def launch_bakkesmod(wine: str, prefix: str, executable: str):
     log_info("Launching BakkesMod...")
 
-    wine_bin = f"{proton_path}/bin/wine64"
-    wine_env = wine_env = f"{SYNC}"
+    wine_env = f"{WINESYNC}"
 
     log_debug(f"Using {wine_env}")
 
-    cmd = f'{wine_env} WINEPREFIX="{RL_PREFIX}/pfx" "{wine_bin}" "{BAKKES_EXE}" &'
+    cmd = f'{wine_env} WINEPREFIX="{prefix}" "{wine}" "{executable}" &'
 
     _ = os.system(cmd)
     time.sleep(2)
@@ -75,17 +74,22 @@ def monitor_rocket_league(game_pid: int | str, bakkes_pid: int | str):
         log_debug("BakkesMod process already terminated")
 
 
-def run_bakkesmod(skip_checks: bool = False):
-    if not check_bakkes_exists():
+def run_bakkesmod(skip_checks: bool = False, platform: str = ""):
+    data = get_config_data(platform)
+
+    if not data:
         return 1
 
-    proton_path = get_proton_path(HOME)
-    if not proton_path:
+    prefix, wine = data
+
+    # ensure bakkesmod in installed
+    bakkes_exe = f"{prefix}/drive_c/Program Files/BakkesMod/BakkesMod.exe"
+    if not check_bakkes_exists(bakkes_exe):
         return 1
 
-    log_info(f"BakkesMod path: {BAKKES_EXE}")
-    log_info(f"Proton version: {proton_path}")
+    log_info(f"BakkesMod path: {bakkes_exe}")
     log_info(f"Skip checks: {skip_checks}")
+    log_info(f"Platform: {platform}")
 
     if is_process_running("BakkesMod.exe"):
         log_info("BakkesMod is already running, exiting...")
@@ -98,7 +102,7 @@ def run_bakkesmod(skip_checks: bool = False):
     else:
         log_info("Running in standalone mode (no RL checks)")
 
-    bakkes_pid = launch_bakkesmod(proton_path, WINESYNC)
+    bakkes_pid = launch_bakkesmod(wine, prefix, bakkes_exe)
 
     if not bakkes_pid:
         return 1
@@ -113,21 +117,23 @@ def run_bakkesmod(skip_checks: bool = False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="BakkesMod Runner")
+    parser = argparse.ArgumentParser(description="BakkesMod")
     _ = parser.add_argument(
         "--skip-checks",
         action="store_true",
         help="Run in standalone mode without RL checks",
     )
+    _ = parser.add_argument("--platform", choices=["steam", "heroic"])
     _ = parser.add_argument(
         "--standalone", action="store_true", help="Alias for --skip-checks"
     )
 
     args = parser.parse_args()
 
-    skip_checks = args.skip_checks or args.standalone
+    skip_checks: bool = args.skip_checks or args.standalone
+    platform: str = args.platform
 
-    sys.exit(run_bakkesmod(skip_checks))
+    sys.exit(run_bakkesmod(skip_checks, platform))
 
 
 if __name__ == "__main__":

@@ -57,7 +57,7 @@ You'll need to **find what [wine prefix](https://wiki.archlinux.org/title/wine#W
 
 ### Finding Wine/Proton folder
 
-You'll need to **find the path to Proton/Wine** that is used for Rocket League. 
+You'll need to **find the path to Proton/Wine** that is used for Rocket League.
 
 > [!TIP]
 > On Steam this can be achieved by inspecting `~/.steam/steam/steamapps/compatdata/252950/config_info` and noting the path on the 3. line without the last directory (the result should end with `/dist`). For me it's `~/.local/share/Steam/steamapps/common/Proton 7.0/dist` for example.
@@ -69,7 +69,7 @@ You'll need to **find the path to Proton/Wine** that is used for Rocket League.
 ## Installation
 > [!NOTE]
 > Replace `your_prefix` with the one you obtained in [Finding wine prefix](#finding-wine-prefix)
-> 
+>
 > Replace `wine_folder` with the one you obtained in [Finding Wine/Proton folder](#finding-wineproton-folder)
 
 ### Configuring wine prefix
@@ -91,7 +91,7 @@ This should start the BakkesMod installer. Go through the installation as you no
 
 > [!WARNING]
 > You'll probably have to enable the executable flag for `BakkesModSetup.exe`.
-> 
+>
 > You can do so by running `chmod u+x ~/Downloads/BakkesModSetup.exe`
 
 ## Running BakkesMod
@@ -114,7 +114,7 @@ After starting Rocket League you can launch BakkesMod in the same way as running
 
 > [!TIP]
 > You can find the path to `BakkesMod.exe` using this command: `find ~ -name "BakkesMod.exe" 2> /dev/null`
-> 
+>
 > The path should probably end with `drive_c/Program Files/BakkesMod/BakkesMod.exe`
 
 ### Automatically

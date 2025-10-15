@@ -1,7 +1,25 @@
+import os
 import sys
 import subprocess
 import shutil
+import json
 from pathlib import Path
+
+# game identifiers
+STEAM_APP_ID = "252950"
+HEROIC_CODENAME = "Sugar"
+
+
+def get_home_dir() -> str:
+    return str(Path.home())
+
+
+# extra consts
+HOME = get_home_dir()
+REPO_DIR = str(Path(__file__).parent.parent.absolute())
+CONFIG_DIR = f"{HOME}/.local/share/BakkesLinux"
+BIN_DIR = f"{HOME}/.local/bin"
+DESKTOP_DIR = f"{HOME}/.local/share/applications"
 
 
 def log_info(msg: str) -> None:
@@ -80,10 +98,6 @@ def ensure_dir(path: str) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def get_home_dir() -> str:
-    return str(Path.home())
-
-
 def get_proton_path(home: str) -> str | None:
     if home == "":
         home = get_home_dir()
@@ -104,3 +118,74 @@ def get_proton_path(home: str) -> str | None:
 
         proton_path = Path(lines[2].strip()).parent
         return str(proton_path)
+
+
+def get_steam_data() -> tuple[str, str] | None:
+    proton_path = get_proton_path("")
+    if not proton_path:
+        return None
+
+    prefix = f"{HOME}/.steam/steam/steamapps/compatdata/{STEAM_APP_ID}/pfx"
+    wine = f"{proton_path}/bin/wine64"
+
+    return prefix, wine
+
+
+# @TOFIX: can users change heroic installation? idk
+def get_heroic_data() -> tuple[str, str] | None:
+    config_content = ""
+    with open(f"{HOME}/.config/heroic/GamesConfig/{HEROIC_CODENAME}.json", "r") as c:
+        config_content = c.read()
+
+    config_data = json.loads(config_content)[HEROIC_CODENAME]
+    wine_data = config_data["wineVersion"]
+    prefix = f"{config_data['winePrefix']}/pfx"
+    wine = (
+        str(Path(f"{wine_data['bin']}/../files/bin/wine64").resolve())
+        if wine_data["type"] == "proton"
+        else wine_data["bin"]
+    )
+    return prefix, wine
+
+
+def get_rl_prefix(platform: str) -> tuple[str, str] | None:
+    match platform:
+        case "steam":
+            return get_steam_data()
+        case "heroic":
+            return get_heroic_data()
+        case _:
+            pass
+    return None
+
+
+def parse_config_file(location: str) -> dict[str, str] | None:
+    data: dict[str, str] = {}
+    if not os.path.exists(location):
+        log_error(f"failed to find platform config at: {location}")
+        return None
+
+    with open(location) as f:
+        for line in f:
+            line = line.strip()
+            if not line or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            data[key] = value
+
+    return data
+
+
+def get_config_data(platform: str) -> tuple[str, str] | None:
+    config = parse_config_file(f"{CONFIG_DIR}/{platform}")
+    if not config:
+        return None
+
+    return config["WINE_PREFIX"], config["WINE_BINARY"]
+
+
+# test
+if __name__ == "__main__":
+    print(get_rl_prefix("steam"))
+    print(get_rl_prefix("heroic"))
+    print(get_config_data("heroic"))

@@ -12,7 +12,6 @@ done
 SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_PATH")" &> /dev/null && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_DIR="$HOME/.local/share/BakkesLinux"
-DESKTOP_FILE="$HOME/.local/share/applications/bakkesmod.desktop"
 RUNNER_PATH="$HOME/.local/bin/bakkesmod"
 
 log_info() {
@@ -29,14 +28,35 @@ log_success() {
 
 cmd_run() {
     local flags=""
-    if [ "$1" = "--standalone" ] || [ "$1" = "--skip-checks" ]; then
-        flags="--standalone"
-        log_info "Running BakkesMod in standalone mode"
-    else
+    local platform=""
+    
+    # parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --standalone|--skip-checks)
+                flags="--standalone"
+                log_info "Running BakkesMod in standalone mode"
+                shift
+                ;;
+            --platform=*)
+                platform="$1"
+                shift
+                ;;
+            --platform)
+                platform="--platform=$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    if [ -z "$flags" ]; then
         log_info "Running BakkesMod"
     fi
 
-    bash "$REPO_DIR/run.sh" $flags
+    bash "$REPO_DIR/run.sh" $flags $platform
 }
 
 cmd_update() {
@@ -62,8 +82,10 @@ cmd_remove() {
             log_info "Removing config directory..."
             rm -rf "$CONFIG_DIR"
 
-            log_info "Removing desktop file..."
-            rm -f "$DESKTOP_FILE"
+            log_info "Removing desktop files..."
+            rm -f "$HOME/.local/share/applications/bakkesmod-steam.desktop"
+            rm -f "$HOME/.local/share/applications/bakkesmod-heroic.desktop"
+            rm -f "$HOME/.local/share/applications/bakkesmod.desktop"
 
             log_info "Removing runner..."
             rm -f "$RUNNER_PATH"
@@ -81,15 +103,16 @@ show_usage() {
     echo "Usage: bakkesmod <command> [options]"
     echo ""
     echo "Commands:"
-    echo "  run [--standalone]    Run BakkesMod (standalone mode skips RL checks)"
-    echo "  update                Update BakkesLinux repository"
-    echo "  remove                Remove BakkesLinux installation"
-    echo "  help                  Show this help message"
+    echo "  run     [--standalone --platform] Run BakkesMod"
+    echo "  install [--platform]              Install BakkesMod on the specified prefix"
+    echo "  update                            Update BakkesLinux repository"
+    echo "  remove                            Remove BakkesLinux installation"
+    echo "  help                              Show this help message"
 }
 
 case "$1" in
     run)
-        cmd_run "$2"
+        cmd_run "${@:2}"
         ;;
     update)
         cmd_update
