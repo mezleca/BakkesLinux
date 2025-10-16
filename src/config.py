@@ -1,7 +1,6 @@
 import vdf
 import os
 from pathlib import Path
-from typing import Optional
 from utils import log_info, log_error, log_success
 
 ROCKET_LEAGUE_APP_ID = "252950"
@@ -11,13 +10,13 @@ def get_steam_path() -> str:
     return os.path.expanduser("~/.steam/steam")
 
 
-def get_userdata_path(steam_path: Optional[str] = None) -> Path:
+def get_userdata_path(steam_path: str | None) -> str:
     if steam_path is None:
         steam_path = get_steam_path()
-    return Path(steam_path, "userdata")
+    return str(Path(steam_path, "userdata"))
 
 
-def get_first_user_id(steam_path: Optional[str] = None) -> Optional[str]:
+def get_first_user_id(steam_path: str) -> str | None:
     userdata = get_userdata_path(steam_path)
 
     try:
@@ -32,9 +31,7 @@ def get_config_path(userid: str) -> Path:
     return Path(userid, "config/localconfig.vdf")
 
 
-def set_launch_options(
-    bakkes_script_path: str, steam_path: Optional[str] = None
-) -> bool:
+def set_launch_options(bakkes_script_path: str, steam_path: str) -> bool:
     log_info("Setting Rocket League launch options in Steam")
 
     userid = get_first_user_id(steam_path)
