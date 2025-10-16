@@ -11,7 +11,7 @@ from pathlib import Path
 from utils import (
     CONFIG_DIR,
     DESKTOP_DIR,
-    get_rl_prefix,
+    get_rl_data,
     REPO_DIR,
     BIN_DIR,
     log_info,
@@ -89,7 +89,7 @@ def setup_prefix_and_install(setup_exe_path: str, platform: str) -> bool:
     wait_process_exit("RocketLeague.exe", "Waiting for RocketLeague to exit")
 
     # attempt to get data from the platform
-    data = get_rl_prefix(platform)
+    data = get_rl_data(platform)
     if not data:
         log_error(f"Failed to get Rocket League data from {platform}")
         return False
@@ -154,7 +154,7 @@ def create_bakkesmod_symlink() -> bool:
 def create_desktop_file(platform: str) -> bool:
     desktop_filename = f"bakkesmod-{platform}.desktop"
     desktop_path = f"{DESKTOP_DIR}/{desktop_filename}"
-    
+
     log_info(f"Creating desktop file for {platform} at {desktop_path}")
 
     desktop_content = f"""[Desktop Entry]

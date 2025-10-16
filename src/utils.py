@@ -148,7 +148,7 @@ def get_heroic_data() -> tuple[str, str] | None:
     return prefix, wine
 
 
-def get_rl_prefix(platform: str) -> tuple[str, str] | None:
+def get_rl_data(platform: str) -> tuple[str, str] | None:
     match platform:
         case "steam":
             return get_steam_data()
@@ -186,6 +186,6 @@ def get_config_data(platform: str) -> tuple[str, str] | None:
 
 # test
 if __name__ == "__main__":
-    print(get_rl_prefix("steam"))
-    print(get_rl_prefix("heroic"))
+    print(get_rl_data("steam"))
+    print(get_rl_data("heroic"))
     print(get_config_data("heroic"))
