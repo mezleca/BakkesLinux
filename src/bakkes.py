@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import os
-from random import choices
 import sys
 import time
 import argparse
 from pathlib import Path
 from utils import (
     get_config_data,
-    get_proton_path,
     log_info,
     log_error,
     log_debug,
@@ -133,7 +131,7 @@ def main():
     args = parser.parse_args()
 
     skip_checks: bool = args.skip_checks or args.standalone
-    platform: str = args.platform
+    platform: str = args.platform or "steam"
 
     sys.exit(run_bakkesmod(skip_checks, platform))
 
