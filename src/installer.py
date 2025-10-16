@@ -185,9 +185,7 @@ def setup_launch_options(steam_path: str) -> None:
 
     if response == "y":
         wait_process_exit("steam", "Waiting for Steam to exit")
-
-        run_script = f"{REPO_DIR}/run.sh"
-        if set_launch_options(run_script, steam_path):
+        if set_launch_options(RUNNER_PATH, steam_path):
             log_success("Launch options set successfully")
         else:
             log_error("Failed to set launch options")

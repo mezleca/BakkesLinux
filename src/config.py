@@ -52,17 +52,36 @@ def set_launch_options(bakkes_script_path: str, steam_path: str) -> bool:
             "apps"
         ][ROCKET_LEAGUE_APP_ID]
 
-        if "LaunchOptions" in rl_config:
-            log_info(f"Previous launch options: {rl_config['LaunchOptions']}")
+        # get old parameters
+        old_launch_options = rl_config.get("LaunchOptions", "")
 
-        rl_config["LaunchOptions"] = f'"{bakkes_script_path}" & %command%'
+        if old_launch_options:
+            log_info(f"Previous launch options: {old_launch_options}")
+
+            # check if bakkes is alredy placed on the launch parameters
+            if bakkes_script_path in old_launch_options:
+                return True
+
+            # add bakkes before %command% if present
+            if "%command%" in old_launch_options:
+                new_launch_options = old_launch_options.replace(
+                    "%command%", f'"{bakkes_script_path}" & %command%'
+                )
+            else:
+                # if %command% is not present, add it
+                new_launch_options = (
+                    f'{old_launch_options} "{bakkes_script_path}" & %command%'
+                )
+        else:
+            new_launch_options = f'"{bakkes_script_path}" & %command%'
+
+        rl_config["LaunchOptions"] = new_launch_options
 
         with open(config_path, "w") as config_file:
             vdf.dump(config, config_file, pretty=True)
 
-        log_success("Launch options set successfully")
+        log_success(f"New launch options: {new_launch_options}")
         return True
-
     except Exception as e:
         log_error(f"Failed to set launch options: {e}")
         return False
