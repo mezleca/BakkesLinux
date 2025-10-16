@@ -59,11 +59,13 @@ def check_required_commands(commands: list[str]) -> bool:
 
 
 def run_command(
-    cmd: str, check: bool = True, capture: bool = False
+    cmd: str, check: bool = True, capture: bool = False, debug: bool = False
 ) -> str | bool | None:
     try:
+        if debug:
+            log_info(f"cmd: {cmd}")
+
         if capture:
-            log_info(f"executing: {cmd}")
             result = subprocess.run(
                 cmd, shell=True, check=check, capture_output=True, text=True
             )
@@ -78,7 +80,7 @@ def run_command(
 
 
 def is_process_running(process_name: str) -> bool:
-    result = run_command(f"pgrep -f '{process_name}'", check=False, capture=True)
+    result = run_command(f"pgrep '{process_name}'", check=False, capture=True)
     return result is not None and result != ""
 
 

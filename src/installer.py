@@ -21,7 +21,7 @@ from utils import (
     is_process_running,
     ensure_dir,
 )
-from config import set_launch_options
+from config import get_steam_path, set_launch_options
 
 RUNNER_PATH = f"{BIN_DIR}/bakkesmod"
 CONFIG_FILE = f"{CONFIG_DIR}/repo_path"
@@ -100,7 +100,7 @@ def setup_prefix_and_install(setup_exe_path: str, platform: str) -> bool:
 
     # set prefix to windows 10 (og BakkesLinux does that so why not)
     wine_cmd = f'WINEFSYNC=1 WINEPREFIX="{wine_prefix}" "{wine_bin}" winecfg /v win10'
-    _ = run_command(wine_cmd, True, True)
+    _ = run_command(wine_cmd, True, debug=True)
 
     log_info("Running BakkesMod setup executable")
 
@@ -110,7 +110,7 @@ def setup_prefix_and_install(setup_exe_path: str, platform: str) -> bool:
 
     # run the bakkesmod setup with the platform prefix/bin
     install_cmd = f'WINEFSYNC=1 WINEPREFIX="{wine_prefix}" "{wine_bin}" "{setup_exe}"'
-    if not run_command(install_cmd):
+    if not run_command(install_cmd, debug=True):
         log_error("Failed to run BakkesMod setup")
         return False
 
@@ -178,7 +178,7 @@ Categories=Game;
         return False
 
 
-def setup_launch_options() -> None:
+def setup_launch_options(steam_path: str) -> None:
     response = input(
         "Do you want to set launch options for RocketLeague? (y/n) "
     ).lower()
@@ -187,7 +187,7 @@ def setup_launch_options() -> None:
         wait_process_exit("steam", "Waiting for Steam to exit")
 
         run_script = f"{REPO_DIR}/run.sh"
-        if set_launch_options(run_script):
+        if set_launch_options(run_script, steam_path):
             log_success("Launch options set successfully")
         else:
             log_error("Failed to set launch options")
@@ -237,7 +237,8 @@ def install() -> int:
 
     # setup launch options for steam
     if platform == "steam":
-        setup_launch_options()
+        steam_path = get_steam_path()
+        setup_launch_options(steam_path)
     else:
         log_info("skipping launch options setup")
 
