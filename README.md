@@ -31,6 +31,9 @@ bakkesmod update
 bakkesmod remove
 ```
 
+> [!WARNING]
+> **Heroic Users**: If BakkesMod shows "outdated version" or doesn't inject even with Rocket League open, disable "Enable Safe Mode" in BakkesMod options.
+
 ## Features
 
 - downloads and installs BakkesMod automatically

@@ -47,7 +47,10 @@ def launch_bakkesmod(wine: str, prefix: str, executable: str):
 
     log_debug(f"Using {wine_env}")
 
-    cmd = f'{wine_env} WINEPREFIX="{prefix}" "{wine}" "{executable}" &'
+    # force disable safe mode for Heroic compatibility
+    cmd = f'{wine_env} WINEPREFIX="{prefix}" "{wine}" "{executable}" --no-safe-mode &'
+
+    log_debug(f"Command: {cmd}")
 
     _ = os.system(cmd)
     time.sleep(2)
