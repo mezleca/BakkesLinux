@@ -27,36 +27,8 @@ log_success() {
 }
 
 cmd_run() {
-    local flags=""
-    local platform=""
-    
-    # parse arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --standalone|--skip-checks)
-                flags="--standalone"
-                log_info "Running BakkesMod in standalone mode"
-                shift
-                ;;
-            --platform=*)
-                platform="$1"
-                shift
-                ;;
-            --platform)
-                platform="--platform=$2"
-                shift 2
-                ;;
-            *)
-                shift
-                ;;
-        esac
-    done
-
-    if [ -z "$flags" ]; then
-        log_info "Running BakkesMod"
-    fi
-
-    bash "$REPO_DIR/run.sh" $flags $platform
+    log_info "Running BakkesMod"
+    bash "$REPO_DIR/run.sh" "$@"
 }
 
 cmd_update() {
@@ -112,7 +84,8 @@ show_usage() {
 
 case "$1" in
     run)
-        cmd_run "${@:2}"
+        shift
+        cmd_run "$@"
         ;;
     update)
         cmd_update
