@@ -110,7 +110,6 @@ def run_bakkesmod(skip_checks: bool = False, platform: str = ""):
     if not skip_checks and game_pid:
         monitor_rocket_league(game_pid, bakkes_pid)
     else:
-        log_info("BakkesMod is running in background")
         log_info("Use 'pkill -f BakkesMod.exe' to close it manually")
 
     return 0

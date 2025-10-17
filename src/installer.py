@@ -125,11 +125,11 @@ def setup_prefix_and_install(setup_exe_path: str, platform: str) -> bool:
 def create_bakkesmod_symlink() -> bool:
     log_info(f"Creating bakkesmod symlink at {RUNNER_PATH}")
 
-    runner_script = f"{REPO_DIR}/src/runner.sh"
+    runner_script = f"{REPO_DIR}/run.sh"
 
     # shouldn't happen
     if not Path(runner_script).exists():
-        log_error(f"runner.sh not found: {runner_script}")
+        log_error(f"run.sh not found: {runner_script}")
         return False
 
     try:
