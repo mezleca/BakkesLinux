@@ -50,6 +50,9 @@ bakkesmod update
 - Python 3
 - Rocket League installed on any of the supported platform
 
+# TODO
+- [ ] temp copy / link bakkesmod installation to prefix (so you dont need to reinstall bakkesmod on new prefixes)
+
 ## Troubleshooting
 
 **BakkesMod won't inject**: disable "Enable safe mode" in BakkesMod settings
